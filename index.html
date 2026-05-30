@@ -1290,6 +1290,200 @@
     border-radius: 3px;
   }
 
+  /* ===== Community: Waitlist 카드 (곧 출시 + 이메일 등록) ===== */
+  .waitlist-card {
+    background: linear-gradient(135deg, #1F2937 0%, #4F46E5 60%, #7C3AED 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 22px 20px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(79,70,229,0.25);
+  }
+  .waitlist-card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .waitlist-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.22);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .waitlist-title {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .waitlist-desc {
+    font-size: 12.5px;
+    line-height: 1.6;
+    opacity: 0.95;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .waitlist-form {
+    display: flex;
+    gap: 6px;
+    position: relative;
+  }
+  .waitlist-form input {
+    flex: 1;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    background: rgba(255,255,255,0.95);
+    color: #1F2937;
+  }
+  .waitlist-form input:focus { outline: 2px solid #fff; }
+  .waitlist-form button {
+    background: #fff;
+    color: #4F46E5;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .waitlist-stats {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 10px;
+    position: relative;
+    text-align: center;
+  }
+
+  /* ===== Community: 성장노트 ===== */
+  .growth-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+  .growth-sub {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+  .growth-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .growth-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .growth-month {
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .growth-month-tag {
+    font-size: 10px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+  .growth-profit-pill {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .growth-profit-pill.up { background: var(--green-soft); color: var(--green); }
+  .growth-profit-pill.down { background: var(--red-soft); color: var(--red); }
+  .growth-profit-pill.zero { background: var(--bg); color: var(--text-sub); }
+  .growth-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .growth-stat {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .growth-stat-lbl { font-size: 10px; color: var(--text-sub); margin-bottom: 2px; }
+  .growth-stat-val { font-size: 13px; font-weight: 700; color: var(--text); }
+  .growth-best {
+    background: linear-gradient(90deg, #FEF3C7, #FDE68A 40%, transparent);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 11.5px;
+    color: #92400E;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .growth-note-area {
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+  }
+  .growth-note-lbl {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .growth-note-area textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--text);
+    resize: vertical;
+    min-height: 56px;
+    line-height: 1.5;
+  }
+  .growth-note-area textarea:focus { outline: none; border-color: var(--primary); }
+  .growth-note-saved {
+    font-size: 10.5px;
+    color: var(--green);
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .growth-note-saved.show { opacity: 1; }
+  .growth-empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-sub);
+  }
+  .growth-empty-emoji { font-size: 36px; margin-bottom: 8px; }
+
   /* ===== PWA 설치 배너 (하단 toast) ===== */
   .pwa-banner {
     position: fixed;
@@ -2177,18 +2371,31 @@
     </div>
   </div>
 
-  <!-- ===== COMMUNITY ===== -->
+  <!-- ===== COMMUNITY (성장노트 + 대기자 수집) ===== -->
   <div class="page" id="page-community">
-    <div class="comm-banner">
-      <div class="comm-banner-text">
-        N잡러 PRO 멤버십 ✦
-        <small>독점 콘텐츠 · 절세 자료 · 실수입 인증 자유롭게</small>
+    <!-- 🌐 익명 커뮤니티 곧 출시 -->
+    <div class="waitlist-card">
+      <div class="waitlist-badge">🌐 곧 출시</div>
+      <div class="waitlist-title">익명 N잡러 커뮤니티</div>
+      <div class="waitlist-desc">
+        다른 N잡러와 매출 인증 · 절세 노하우 · 실패담을 익명으로 공유해요.<br>
+        <b>출시되면 가장 먼저 알려드릴게요.</b>
       </div>
-      <button class="comm-banner-btn" onclick="alert('곧 출시됩니다!')">가입</button>
+      <form class="waitlist-form" onsubmit="submitWaitlist(event)">
+        <input type="email" id="waitlistEmail" required placeholder="이메일 주소" autocomplete="email">
+        <button type="submit">알림 신청</button>
+      </form>
+      <div class="waitlist-stats" id="waitlistStats"></div>
     </div>
 
-    <div class="comm-tabs" id="commTabs"></div>
-    <div id="postList"></div>
+    <!-- 📝 성장노트 -->
+    <div class="growth-header">
+      <div>
+        <div class="section-title">📝 내 성장노트</div>
+        <div class="growth-sub">월별 회고 + 자동 통계로 본인 N잡 흐름 추적</div>
+      </div>
+    </div>
+    <div id="growthList"></div>
   </div>
 
   <!-- ===== MORE (Patterns / Tax / Settings) ===== -->
@@ -2470,6 +2677,8 @@ let state = {
   taxRate: 0.15,
   memos: {}, // { '2026-05-15': '미팅, 외주 컨펌' }
   classifyMemory: {}, // { '에어비앤비': { pipeline:'stay', incCat:'정산금', count:3 } } — 자동 분류 학습 데이터
+  growthNotes: {},    // { '2026-05': '4월에 협찬 1건 들어옴 ...' } — 월별 성장노트
+  waitlist: [],       // ['name@example.com', ...] — 익명 커뮤니티 출시 대기자
 };
 
 // 익명 비교 통계 (커뮤니티 평균 mock 데이터)
@@ -2590,6 +2799,9 @@ function loadState() {
     if (raw) {
       state = { ...state, ...JSON.parse(raw) };
       if (!state.memos) state.memos = {};
+      if (!state.classifyMemory) state.classifyMemory = {};
+      if (!state.growthNotes) state.growthNotes = {};
+      if (!state.waitlist) state.waitlist = [];
     } else {
       // 신규 사용자: 빈 상태로 시작 → 온보딩으로 N잡 선택 → 빈 가계부
       // 샘플 데이터는 사용자가 "설정 → 샘플 데이터 불러오기"로 명시적으로 불러올 때만
@@ -3342,41 +3554,140 @@ function setExpFilter(cat) { currentFilters.expenseCat = cat; renderExpensePage(
 // ============================================================
 // COMMUNITY page
 // ============================================================
+// 📝 성장노트 + 🌐 대기자 수집
 function renderCommunity() {
-  const cats = ['전체','꿀팁','세무','후기','질문','PRO'];
-  document.getElementById('commTabs').innerHTML = cats.map(c =>
-    `<button class="comm-tab ${currentFilters.commCat === c ? 'active' : ''}" onclick="setCommFilter('${c}')">${c}</button>`
-  ).join('');
-  let posts = [...POSTS];
-  if (currentFilters.commCat !== '전체') {
-    posts = posts.filter(p => p.catLabel === currentFilters.commCat);
+  // 대기자 통계
+  const waitlist = state.waitlist || [];
+  const statsEl = document.getElementById('waitlistStats');
+  if (statsEl) {
+    statsEl.innerHTML = waitlist.length
+      ? `✅ ${waitlist.length}명 신청 중${waitlist.includes((state._lastEmail||'')) ? ' · 이미 신청하셨어요!' : ''}`
+      : '✨ 첫 신청자가 되어보세요';
   }
-  posts.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0));
-  document.getElementById('postList').innerHTML = posts.map(p => `
-    <div class="post ${p.locked ? 'pro-locked' : ''}" onclick="${p.locked ? "alert('PRO 멤버십이 필요합니다 ✨');" : "alert('게시글 상세는 준비 중입니다');"}">
-      ${p.locked ? '<div class="pro-lock-badge">🔒 PRO</div>' : ''}
-      <div class="post-top">
-        <span class="post-cat ${p.cat}">${p.catLabel}</span>
-        ${p.pinned ? '<span style="color:var(--red);font-weight:700;">📌 고정</span>' : ''}
+
+  // 성장노트 — 거래 데이터가 있는 월만 카드 생성 (최근 6개월까지)
+  const months = new Set();
+  [...state.income, ...state.expense].forEach(t => {
+    if (t.date) months.add(t.date.substring(0,7)); // YYYY-MM
+  });
+  const sorted = [...months].sort((a,b) => b.localeCompare(a)).slice(0,12);
+
+  const listEl = document.getElementById('growthList');
+  if (!sorted.length) {
+    listEl.innerHTML = `
+      <div class="growth-empty">
+        <div class="growth-empty-emoji">📝</div>
+        <div style="font-weight:700;margin-bottom:4px;">아직 작성할 노트가 없어요</div>
+        <div style="font-size:12px;">수입/지출을 추가하면 월별 성장노트가 자동으로 생겨요</div>
       </div>
-      <div class="post-title">${p.title}</div>
-      <div class="post-preview">${p.preview}</div>
-      <div class="post-bottom">
-        <div class="post-author">
-          <div class="post-avatar">${p.author.charAt(0)}</div>
-          <span>${p.author}</span>
-          <span class="dot"></span>
-          <span>${p.time}</span>
+    `;
+    return;
+  }
+  if (!state.growthNotes) state.growthNotes = {};
+
+  listEl.innerHTML = sorted.map((ym, idx) => {
+    const [yr, mo] = ym.split('-').map(Number);
+    const monthStart = `${ym}-01`;
+    const monthEnd = `${ym}-31`;
+    const incs = state.income.filter(i => i.date >= monthStart && i.date <= monthEnd);
+    const exps = state.expense.filter(e => e.date >= monthStart && e.date <= monthEnd);
+    const totalInc = incs.reduce((s,i)=>s+i.amount, 0);
+    const totalExp = exps.reduce((s,e)=>s+e.amount, 0);
+    const profit = totalInc - totalExp;
+    const txCount = incs.length + exps.length;
+
+    // 베스트 N잡 (월별 순이익 가장 큰)
+    const pipelines = state.pipelines || [];
+    let best = null;
+    pipelines.forEach(p => {
+      const pInc = incs.filter(i => i.pipeline === p.id).reduce((s,i)=>s+i.amount, 0);
+      const pExp = exps.filter(e => e.pipeline === p.id).reduce((s,e)=>s+e.amount, 0);
+      const pProfit = pInc - pExp;
+      if (!best || pProfit > best.profit) best = { ...p, profit: pProfit, income: pInc };
+    });
+
+    // 전월 대비
+    const prevYm = computePrevMonth(ym);
+    let trendText = '';
+    if (prevYm) {
+      const prevInc = state.income.filter(i => i.date.startsWith(prevYm)).reduce((s,i)=>s+i.amount, 0);
+      const prevExp = state.expense.filter(e => e.date.startsWith(prevYm)).reduce((s,e)=>s+e.amount, 0);
+      const prevProfit = prevInc - prevExp;
+      if (prevProfit !== 0) {
+        const diff = ((profit - prevProfit) / Math.abs(prevProfit)) * 100;
+        const sign = diff >= 0 ? '+' : '';
+        trendText = `전월 대비 ${sign}${diff.toFixed(0)}%`;
+      }
+    }
+
+    const pillClass = profit > 0 ? 'up' : (profit < 0 ? 'down' : 'zero');
+    const isCurrentMonth = idx === 0;
+    const memo = state.growthNotes[ym] || '';
+
+    return `
+      <div class="growth-card">
+        <div class="growth-card-head">
+          <div class="growth-month">
+            ${yr}년 ${mo}월
+            ${isCurrentMonth ? '<span class="growth-month-tag">이번 달</span>' : ''}
+          </div>
+          <span class="growth-profit-pill ${pillClass}">${profit >= 0 ? '+' : ''}${fmtCompact(profit)}</span>
         </div>
-        <div class="post-stats">
-          <span>❤️ ${p.likes}</span>
-          <span>💬 ${p.comments}</span>
+        <div class="growth-stats">
+          <div class="growth-stat"><div class="growth-stat-lbl">수입</div><div class="growth-stat-val" style="color:var(--green);">${fmtCompact(totalInc)}</div></div>
+          <div class="growth-stat"><div class="growth-stat-lbl">지출</div><div class="growth-stat-val" style="color:var(--red);">${fmtCompact(totalExp)}</div></div>
+          <div class="growth-stat"><div class="growth-stat-lbl">거래</div><div class="growth-stat-val">${txCount}건</div></div>
+        </div>
+        ${best && best.profit > 0 ? `
+          <div class="growth-best">🏆 베스트 N잡: <b>${best.icon} ${best.name}</b> · 순이익 ${fmtCompact(best.profit)}${trendText ? ' · ' + trendText : ''}</div>
+        ` : trendText ? `<div class="growth-best" style="background:linear-gradient(90deg,#E0E7FF,transparent);color:#3730A3;">📊 ${trendText}</div>` : ''}
+        <div class="growth-note-area">
+          <div class="growth-note-lbl">💭 이 달의 메모 <span style="color:var(--text-faint);font-weight:400;">(잘된 일/배운 점/다음 달 계획)</span></div>
+          <textarea data-month="${ym}" oninput="saveGrowthNote(this)" placeholder="예) 4월에 협찬 1건 들어와서 30만원 추가. 다음 달엔 정기 협찬 2건 목표.">${memo.replace(/</g,'&lt;')}</textarea>
+          <div class="growth-note-saved" id="saved-${ym}">✓ 저장됨</div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
-function setCommFilter(cat) { currentFilters.commCat = cat; renderCommunity(); }
+
+function computePrevMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function saveGrowthNote(textarea) {
+  const ym = textarea.dataset.month;
+  if (!ym) return;
+  if (!state.growthNotes) state.growthNotes = {};
+  state.growthNotes[ym] = textarea.value;
+  saveState();
+  // 저장됨 표시 깜빡
+  const saved = document.getElementById('saved-' + ym);
+  if (saved) {
+    saved.classList.add('show');
+    clearTimeout(saved._t);
+    saved._t = setTimeout(() => saved.classList.remove('show'), 1500);
+  }
+}
+
+function submitWaitlist(e) {
+  e.preventDefault();
+  const email = document.getElementById('waitlistEmail').value.trim().toLowerCase();
+  if (!email) return;
+  if (!state.waitlist) state.waitlist = [];
+  if (state.waitlist.includes(email)) {
+    alert('이미 등록된 이메일이에요. 출시되면 꼭 알려드릴게요!');
+  } else {
+    state.waitlist.push(email);
+    state._lastEmail = email;
+    saveState();
+    alert(`✨ 신청 완료\n\n${email}\n\n출시되면 가장 먼저 알려드릴게요. 그동안 가계부 잘 활용해주세요!`);
+  }
+  document.getElementById('waitlistEmail').value = '';
+  renderCommunity();
+}
 
 // ============================================================
 // MORE page (analysis + settings)
