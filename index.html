@@ -2469,6 +2469,7 @@ let state = {
   payMethods: ['신용카드', '체크카드', '계좌이체', '현금', '간편결제'],
   taxRate: 0.15,
   memos: {}, // { '2026-05-15': '미팅, 외주 컨펌' }
+  classifyMemory: {}, // { '에어비앤비': { pipeline:'stay', incCat:'정산금', count:3 } } — 자동 분류 학습 데이터
 };
 
 // 익명 비교 통계 (커뮤니티 평균 mock 데이터)
@@ -2482,6 +2483,50 @@ let charts = {};
 let currentFilters = { incomeCat: '', expenseCat: '', commCat: '전체' };
 let modalState = { type: 'expense', editIdx: null };
 let pendingPhoto = null;
+
+// 🤖 기본 가맹점 사전 (한국 일반 가맹점 → 카테고리 매칭)
+const DEFAULT_VENDOR_DICT = {
+  // 식비
+  '스타벅스': { expCat: '식비' }, '메가커피': { expCat: '식비' }, '메가엠지씨커피': { expCat: '식비' },
+  '컴포즈': { expCat: '식비' }, '이디야': { expCat: '식비' }, '투썸': { expCat: '식비' },
+  '폴바셋': { expCat: '식비' }, '빽다방': { expCat: '식비' },
+  'CU': { expCat: '식비' }, 'GS25': { expCat: '식비' }, '세븐일레븐': { expCat: '식비' },
+  '이마트24': { expCat: '식비' }, '미니스톱': { expCat: '식비' }, '편의점': { expCat: '식비' },
+  '맥도날드': { expCat: '식비' }, '버거킹': { expCat: '식비' }, 'KFC': { expCat: '식비' },
+  '롯데리아': { expCat: '식비' }, '맘스터치': { expCat: '식비' }, '서브웨이': { expCat: '식비' },
+  '도미노': { expCat: '식비' }, '피자헛': { expCat: '식비' }, '교촌': { expCat: '식비' },
+  'BBQ': { expCat: '식비' }, 'BHC': { expCat: '식비' }, '굽네': { expCat: '식비' },
+  '쿠팡이츠': { expCat: '식비' }, '배달의민족': { expCat: '식비' }, '배민': { expCat: '식비' },
+  '요기요': { expCat: '식비' },
+  // 교통
+  '카카오모빌리티': { expCat: '교통' }, '카카오T': { expCat: '교통' }, '카카오택시': { expCat: '교통' },
+  '우티': { expCat: '교통' }, '쏘카': { expCat: '교통' }, '그린카': { expCat: '교통' },
+  '코레일': { expCat: '교통' }, 'SR': { expCat: '교통' }, '지하철': { expCat: '교통' },
+  '버스': { expCat: '교통' }, '주유소': { expCat: '교통' }, 'SK주유': { expCat: '교통' },
+  'GS주유': { expCat: '교통' }, '현대오일': { expCat: '교통' }, 'S-OIL': { expCat: '교통' },
+  '하이패스': { expCat: '교통' }, '톨게이트': { expCat: '교통' },
+  // 운영경비/쇼핑
+  '쿠팡': { expCat: '운영경비' }, '11번가': { expCat: '운영경비' }, 'G마켓': { expCat: '운영경비' },
+  '옥션': { expCat: '운영경비' }, '위메프': { expCat: '운영경비' }, '티몬': { expCat: '운영경비' },
+  '네이버페이': { expCat: '운영경비' }, '스마트스토어': { expCat: '운영경비' },
+  '다이소': { expCat: '운영경비' }, '올리브영': { expCat: '운영경비' },
+  // 구독/도구
+  '넷플릭스': { expCat: '구독/도구' }, '디즈니플러스': { expCat: '구독/도구' }, '왓챠': { expCat: '구독/도구' },
+  '티빙': { expCat: '구독/도구' }, '쿠팡플레이': { expCat: '구독/도구' }, '웨이브': { expCat: '구독/도구' },
+  '유튜브': { expCat: '구독/도구' }, '유튜브 프리미엄': { expCat: '구독/도구' }, '유튜브뮤직': { expCat: '구독/도구' },
+  '멜론': { expCat: '구독/도구' }, '지니뮤직': { expCat: '구독/도구' }, '바이브': { expCat: '구독/도구' },
+  '스포티파이': { expCat: '구독/도구' }, '애플뮤직': { expCat: '구독/도구' },
+  '노션': { expCat: '구독/도구' }, '피그마': { expCat: '구독/도구' }, '슬랙': { expCat: '구독/도구' },
+  '구글 워크스페이스': { expCat: '구독/도구' }, '구글 원': { expCat: '구독/도구' },
+  '미리캔버스': { expCat: '구독/도구' }, '캔바': { expCat: '구독/도구' }, 'Canva': { expCat: '구독/도구' },
+  'ChatGPT': { expCat: '구독/도구' }, 'Claude': { expCat: '구독/도구' }, 'Midjourney': { expCat: '구독/도구' },
+  // 수입 (incCat)
+  '구글 애드센스': { incCat: '광고수익' }, '애드센스': { incCat: '광고수익' }, 'Google AdSense': { incCat: '광고수익' },
+  '구글 애드핏': { incCat: '광고수익' }, '카카오 애드핏': { incCat: '광고수익' }, '네이버 애드포스트': { incCat: '광고수익' },
+  '에어비앤비': { incCat: '정산금' }, 'Airbnb': { incCat: '정산금' }, '야놀자': { incCat: '정산금' },
+  '여기어때': { incCat: '정산금' }, '아고다': { incCat: '정산금' }, 'Booking.com': { incCat: '정산금' },
+  '쿠팡파트너스': { incCat: '제휴/협찬' }, '아이허브': { incCat: '제휴/협찬' }, '링크프라이스': { incCat: '제휴/협찬' },
+};
 
 const SAMPLE = {
   income: [
@@ -3971,6 +4016,19 @@ function renderModalFields(item, type) {
       </select>
     </div>`;
 
+  // 📋 카드 SMS / 영수증 OCR 텍스트 자동 파싱 영역 (접힘 상태)
+  const parseSection = `
+    <details id="parseWrap" style="background:linear-gradient(135deg,#EEF2FF,#FDF2F8);border:1px solid #C7D2FE;border-radius:12px;padding:0;overflow:hidden;">
+      <summary style="padding:10px 14px;cursor:pointer;font-size:13px;font-weight:700;color:#4F46E5;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+        <span>📋 카드 SMS / 영수증 텍스트로 자동 채우기</span>
+        <span style="font-size:10px;background:#4F46E5;color:#fff;padding:2px 6px;border-radius:999px;">NEW</span>
+      </summary>
+      <div style="padding:0 14px 14px;">
+        <textarea id="parseTextarea" placeholder="예시) [신한카드] 12,000원 일시불 05/30 14:22 스타벅스 강남점&#10;&#10;💡 영수증은 폰 앨범에서 사진 길게 누르기 → 텍스트 인식 → 복사 후 여기에 붙여넣기 (iOS Live Text / Android Google Lens)" style="width:100%;min-height:80px;border:1px solid #C7D2FE;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;"></textarea>
+        <button type="button" onclick="applyParseToForm()" style="margin-top:8px;width:100%;background:#4F46E5;color:#fff;border:0;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✨ 텍스트 분석 → 자동 입력</button>
+      </div>
+    </details>`;
+
   const repeatToggle = `
     <label class="repeat-toggle" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">
       <input type="checkbox" name="repeatMonthly" id="repeatMonthlyChk" ${item&&item.repeatMonthly?'checked':''} style="width:18px;height:18px;cursor:pointer;">
@@ -3979,6 +4037,7 @@ function renderModalFields(item, type) {
 
   const incFields = `
     <div class="form-stack">
+      ${parseSection}
       ${photoSection}
       <div><label>날짜</label><input type="date" name="date" required value="${item?item.date:todayStr()}"></div>
       ${pipelineSelect}
@@ -3989,13 +4048,14 @@ function renderModalFields(item, type) {
       <div><label>카테고리</label>
         <select name="cat">${state.incCategories.map(c => `<option ${item&&item.cat===c?'selected':''}>${c}</option>`).join('')}</select>
       </div>
-      <div><label>거래처</label><input type="text" name="src" placeholder="ABC회사" value="${item?(item.src||''):''}"></div>
-      <div><label>내용</label><input type="text" name="desc" placeholder="로고 디자인" value="${item?(item.desc||''):''}"></div>
+      <div><label>거래처</label><input type="text" name="src" placeholder="ABC회사" value="${item?(item.src||''):''}" onblur="tryAutoClassify(this)"></div>
+      <div><label>내용</label><input type="text" name="desc" placeholder="로고 디자인" value="${item?(item.desc||''):''}" onblur="tryAutoClassify(this)"></div>
       ${repeatToggle}
     </div>`;
 
   const expFields = `
     <div class="form-stack">
+      ${parseSection}
       ${photoSection}
       <div><label>날짜</label><input type="date" name="date" required value="${item?item.date:todayStr()}"></div>
       ${pipelineSelect}
@@ -4009,7 +4069,7 @@ function renderModalFields(item, type) {
         </div>
       </div>
       <div><label>항목</label><input type="text" name="item" placeholder="식비, 광고비 등" value="${item?(item.item||''):''}"></div>
-      <div><label>내용</label><input type="text" name="desc" placeholder="스타벅스" value="${item?(item.desc||''):''}"></div>
+      <div><label>내용</label><input type="text" name="desc" placeholder="스타벅스" value="${item?(item.desc||''):''}" onblur="tryAutoClassify(this)"></div>
       <div>
         <label>관련 수입 <span style="opacity:.6;font-size:11px;font-weight:400;">(사업관련 지출만 필요경비로 잡혀요)</span></label>
         <select name="link">
@@ -4026,6 +4086,212 @@ function closeModal(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('modalBg').classList.remove('show');
 }
+// 📋 범용 텍스트 파싱 (카드 SMS / 영수증 OCR 텍스트)
+function parseTransactionText(rawText) {
+  if (!rawText) return null;
+  const text = rawText.trim();
+  const result = { amount: null, date: null, merchant: null, raw: text };
+
+  // 1. 금액 — "12,000원" 또는 "합계 12,000" 패턴, 가장 큰 숫자 우선
+  const amountMatches = [...text.matchAll(/([\d,]{2,})\s*원/g)];
+  if (amountMatches.length) {
+    // "합계", "총", "Total" 키워드 뒤의 숫자 우선
+    let chosen = null;
+    for (const m of amountMatches) {
+      const before = text.substring(Math.max(0, m.index - 12), m.index);
+      if (/합계|총액|총\s|Total|합산|결제\s?금액/i.test(before)) {
+        chosen = m;
+        break;
+      }
+    }
+    // 못 찾으면 가장 큰 금액
+    if (!chosen) {
+      chosen = amountMatches.reduce((max, m) =>
+        parseInt(m[1].replace(/,/g, ''), 10) > parseInt(max[1].replace(/,/g, ''), 10) ? m : max);
+    }
+    result.amount = parseInt(chosen[1].replace(/,/g, ''), 10);
+  } else {
+    // 원 없이 콤마 숫자만 (영수증 일부 형식)
+    const numOnly = text.match(/(?:합계|총액|결제\s?금액)[^\d]*([\d,]{3,})/i);
+    if (numOnly) result.amount = parseInt(numOnly[1].replace(/,/g, ''), 10);
+  }
+
+  // 2. 날짜 — YYYY-MM-DD, YYYY.MM.DD, MM/DD, MM-DD 등
+  const fullDate = text.match(/(20\d{2})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+  if (fullDate) {
+    result.date = `${fullDate[1]}-${fullDate[2].padStart(2,'0')}-${fullDate[3].padStart(2,'0')}`;
+  } else {
+    const shortDate = text.match(/(\d{1,2})[\/\-](\d{1,2})(?!\d)/);
+    if (shortDate) {
+      const y = new Date().getFullYear();
+      result.date = `${y}-${shortDate[1].padStart(2,'0')}-${shortDate[2].padStart(2,'0')}`;
+    }
+  }
+
+  // 3. 가맹점 — 카드 SMS 형식: "일시불 04/28 12:34 스타벅스" 같은 패턴
+  const smsPatterns = [
+    /(?:일시불|할부)\s+\d{1,2}[\/\-\.]\d{1,2}\s*\d{0,2}:?\d{0,2}\s+([가-힣A-Za-z0-9\(\)\s]{2,30}?)(?:\s+(?:누적|승인|취소)|$)/,
+    /\d{1,2}:\d{2}\s+([가-힣A-Za-z0-9\(\)\s]{2,30}?)(?:\s+(?:누적|승인|취소)|$)/,
+  ];
+  for (const pat of smsPatterns) {
+    const m = text.match(pat);
+    if (m) { result.merchant = m[1].trim().replace(/\s+/g, ' '); break; }
+  }
+  // 영수증 OCR 형식: 첫 줄(상호명) 추정
+  if (!result.merchant) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    // 첫 줄이 너무 짧거나 너무 길지 않으면 상호로 가정
+    if (lines.length && lines[0].length >= 2 && lines[0].length < 30 && !/\d{4,}/.test(lines[0])) {
+      result.merchant = lines[0];
+    }
+  }
+
+  // 4. 카드사 추측
+  if (/KB|국민/.test(text)) result.cardCompany = 'KB';
+  else if (/신한/.test(text)) result.cardCompany = '신한';
+  else if (/현대/.test(text)) result.cardCompany = '현대';
+  else if (/삼성/.test(text)) result.cardCompany = '삼성';
+  else if (/롯데/.test(text)) result.cardCompany = '롯데';
+  else if (/하나/.test(text)) result.cardCompany = '하나';
+  else if (/우리/.test(text)) result.cardCompany = '우리';
+  else if (/NH|농협/.test(text)) result.cardCompany = '농협';
+  else if (/카뱅|카카오뱅크/.test(text)) result.cardCompany = '카카오뱅크';
+  else if (/토스/.test(text)) result.cardCompany = '토스';
+
+  return result;
+}
+
+// 모달 안의 "📋 텍스트로 자동 채우기" 버튼 클릭 시
+function applyParseToForm() {
+  const ta = document.getElementById('parseTextarea');
+  if (!ta) return;
+  const result = parseTransactionText(ta.value);
+  if (!result || (!result.amount && !result.merchant)) {
+    alert('텍스트에서 금액이나 가맹점을 찾을 수 없어요.\n\n카드 SMS 또는 영수증 텍스트 전체를 붙여넣어주세요.');
+    return;
+  }
+  const form = document.querySelector('#modalBg form');
+  if (!form) return;
+  let filled = [];
+  if (result.amount != null) {
+    const amtInput = form.querySelector('[name="amount"]');
+    if (amtInput) { amtInput.value = result.amount.toLocaleString('ko-KR'); filled.push(`금액 ${result.amount.toLocaleString('ko-KR')}원`); }
+  }
+  if (result.date) {
+    const dateInput = form.querySelector('[name="date"]');
+    if (dateInput) { dateInput.value = result.date; filled.push(`날짜 ${result.date}`); }
+  }
+  if (result.merchant) {
+    // 수입은 src(거래처), 지출은 desc(내용)에 가맹점
+    const target = modalState.type === 'income' ? form.querySelector('[name="src"]') : form.querySelector('[name="desc"]');
+    if (target) {
+      target.value = result.merchant;
+      filled.push(`가맹점 ${result.merchant}`);
+      // 가맹점 채웠으니 자동 분류 시도
+      tryAutoClassify(target);
+    }
+  }
+  if (result.cardCompany) {
+    const paySel = form.querySelector('[name="pay"]');
+    if (paySel) {
+      const card = Array.from(paySel.options).find(o => o.textContent.includes('신용카드') || o.textContent.includes('체크카드'));
+      if (card) paySel.value = card.value;
+    }
+  }
+  // 파싱 영역 자동 접기
+  const wrap = document.getElementById('parseWrap');
+  if (wrap) wrap.removeAttribute('open');
+  ta.value = '';
+  alert(`✅ 자동 채움 완료\n\n${filled.join('\n')}\n\n카테고리만 확인해주세요!`);
+}
+
+// 🤖 자동 분류 — 거래처/내용 텍스트 → 학습 메모리 + 기본 사전에서 매칭
+function findClassifyMatch(text, type) {
+  if (!text) return null;
+  const key = type === 'income' ? 'incCat' : 'expCat';
+  const norm = text.trim().toLowerCase();
+  // 1순위: 사용자 학습 메모리 (정확/부분 매칭)
+  if (state.classifyMemory) {
+    for (const [memKey, mem] of Object.entries(state.classifyMemory)) {
+      const ml = memKey.toLowerCase();
+      if (norm === ml || norm.includes(ml) || ml.includes(norm)) {
+        return { pipeline: mem.pipeline, cat: mem[key], source: 'learn' };
+      }
+    }
+  }
+  // 2순위: 기본 사전 (부분 매칭)
+  for (const [dictKey, dict] of Object.entries(DEFAULT_VENDOR_DICT)) {
+    const dl = dictKey.toLowerCase();
+    if (norm.includes(dl) || dl.includes(norm)) {
+      return { pipeline: null, cat: dict[key], source: 'dict' };
+    }
+  }
+  return null;
+}
+function learnClassify(data, type) {
+  if (!data) return;
+  const text = (data.src || data.desc || '').trim();
+  if (!text || text.length < 2) return;
+  if (!state.classifyMemory) state.classifyMemory = {};
+  const existing = state.classifyMemory[text] || { count: 0 };
+  const key = type === 'income' ? 'incCat' : 'expCat';
+  state.classifyMemory[text] = {
+    pipeline: data.pipeline,
+    [key]: data.cat,
+    count: existing.count + 1,
+    lastUsed: data.date,
+  };
+}
+// 모달 안에서 거래처/내용 blur 시 호출 — 자동 채움
+function tryAutoClassify(input) {
+  const form = input.closest('form');
+  if (!form) return;
+  const isInc = modalState.type === 'income';
+  // 양쪽 필드(거래처 src, 내용 desc) 모두 보고 더 긴 텍스트로 매칭
+  const src = form.querySelector('[name="src"]')?.value || '';
+  const desc = form.querySelector('[name="desc"]')?.value || '';
+  const text = (src.length >= desc.length ? src : desc).trim();
+  if (text.length < 2) return;
+  const match = findClassifyMatch(text, modalState.type);
+  if (!match) return;
+  // N잡 자동 선택 (학습 매칭의 경우만, 사전엔 N잡 정보 없음)
+  if (match.pipeline) {
+    const pipSel = document.getElementById('pipelineSelectInput');
+    if (pipSel && !pipSel.value) {
+      const opt = pipSel.querySelector(`option[value="${match.pipeline}"]`);
+      if (opt) pipSel.value = match.pipeline;
+    }
+  }
+  // 카테고리 자동 선택
+  if (match.cat) {
+    const catSel = form.querySelector('[name="cat"]');
+    if (catSel) {
+      const opt = Array.from(catSel.options).find(o => o.value === match.cat || o.textContent.trim() === match.cat);
+      if (opt) catSel.value = opt.value;
+    }
+  }
+  // 토스트 안내
+  showClassifyToast(text, match);
+}
+function showClassifyToast(text, match) {
+  const existing = document.getElementById('classifyToast');
+  if (existing) existing.remove();
+  const tag = match.source === 'learn' ? '💡 지난 거래에서 학습됨' : '📚 기본 사전 매칭';
+  const toast = document.createElement('div');
+  toast.id = 'classifyToast';
+  toast.style.cssText = 'position:fixed;left:50%;top:60px;transform:translateX(-50%);background:#1F2937;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:600;z-index:1100;box-shadow:0 8px 20px rgba(0,0,0,0.2);animation:fadeInOut 2.6s ease-in-out;';
+  toast.innerHTML = `${tag} → ${match.cat || ''}`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2600);
+}
+// 토스트 애니메이션 CSS 한 번만 주입
+if (!document.getElementById('classifyToastStyle')) {
+  const s = document.createElement('style');
+  s.id = 'classifyToastStyle';
+  s.textContent = '@keyframes fadeInOut { 0% { opacity:0; transform:translateX(-50%) translateY(-8px); } 12% { opacity:1; transform:translateX(-50%) translateY(0); } 88% { opacity:1; } 100% { opacity:0; transform:translateX(-50%) translateY(-4px); } }';
+  document.head.appendChild(s);
+}
+
 // 💸 금액 입력 시 자동 콤마 포매팅 (12000 → 12,000)
 function fmtAmount(n) {
   if (n === '' || n === null || n === undefined || isNaN(n)) return '';
@@ -4063,6 +4329,8 @@ function submitModal(e) {
     if (modalState.editIdx !== null) state.expense[modalState.editIdx] = data;
     else state.expense.push(data);
   }
+  // 🤖 자동 분류 학습 — 거래처/내용 + N잡/카테고리 조합 기억
+  learnClassify(data, modalState.type);
   pendingPhoto = null;
   processRepeats();
   saveState();
