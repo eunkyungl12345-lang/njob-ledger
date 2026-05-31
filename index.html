@@ -2169,6 +2169,17 @@
 </head>
 <body>
 
+<!-- ===== 주간 백업 알림 배너 ===== -->
+<div class="pwa-banner" id="backupBanner" style="bottom:130px;background:linear-gradient(135deg,#0F766E,#10B981);box-shadow:0 12px 32px rgba(16,185,129,0.35);">
+  <div class="pwa-banner-icon">📥</div>
+  <div class="pwa-banner-body">
+    <div class="pwa-banner-title">데이터 백업 한 번 어떠세요?</div>
+    <div class="pwa-banner-desc">폰 바꾸거나 캐시 지우면 다 날아가요. JSON 파일로 받아두세요.</div>
+  </div>
+  <button class="pwa-banner-btn" style="color:#0F766E;" onclick="runBackupNow()">백업</button>
+  <button class="pwa-banner-close" onclick="dismissBackupBanner()" title="7일 후 다시">✕</button>
+</div>
+
 <!-- ===== PWA 설치 배너 ===== -->
 <div class="pwa-banner" id="pwaBanner">
   <div class="pwa-banner-icon">📱</div>
@@ -2580,8 +2591,8 @@
     <div class="tab-label">지출</div>
   </div>
   <div class="tab" data-page="community">
-    <span class="tab-icon">💬</span>
-    <div class="tab-label">커뮤니티</div>
+    <span class="tab-icon">📝</span>
+    <div class="tab-label">성장노트</div>
   </div>
   <div class="tab" data-page="more">
     <span class="tab-icon">📊</span>
@@ -2671,7 +2682,7 @@ let state = {
     { id: 'stay', name: '단기임대', icon: '🏠', color: '#10B981' },
     { id: 'dating', name: '로테이션 소개팅', icon: '💕', color: '#EC4899' },
   ],
-  incCategories: ['광고수익', '정산금', '제휴/협찬', '참가비', '컨설팅', '기타'],
+  incCategories: ['광고수익', '정산금', '호스트 수익', '제휴/협찬', '참가비', '컨설팅', '기타'],
   expCategories: ['운영경비', '광고비', '청소/관리', '식비', '교통', '구독/도구', '기타'],
   payMethods: ['신용카드', '체크카드', '계좌이체', '현금', '간편결제'],
   taxRate: 0.15,
@@ -2871,7 +2882,7 @@ function goTab(page) {
   else if (page === 'sheet') document.querySelector('.tab[data-page="more"]').classList.add('active');
   document.getElementById('page-' + page).classList.add('active');
   window.scrollTo(0, 0);
-  const titles = { home:'N잡 가계부', income:'수입 내역', expense:'지출 내역', community:'N잡러 커뮤니티', more:'분석 / 설정', sheet:'📊 시트 모드' };
+  const titles = { home:'N잡 가계부', income:'수입 내역', expense:'지출 내역', community:'📝 성장노트', more:'분석 / 설정', sheet:'📊 시트 모드' };
   document.getElementById('appTitle').textContent = titles[page] || 'N잡 가계부';
   renderAll();
 }
@@ -4040,9 +4051,31 @@ function saveSheetData() {
   if (!valid.length) { alert('저장할 데이터가 없습니다 (날짜와 금액 필수)'); return; }
   if (!confirm(`${valid.length}건을 가계부에 추가할까요?`)) return;
   valid.forEach(r => {
+    // 🤖 N잡 자동 매칭 — 이름으로 입력했으면 등록된 파이프라인의 ID로 변환
+    // 등록 안 된 새 N잡이면 자동 생성
+    let pipelineId = r.pipeline || null;
+    if (pipelineId && state.pipelines) {
+      const matched = state.pipelines.find(p => p.id === pipelineId || p.name === pipelineId || p.name.replace(/\s/g,'') === String(pipelineId).replace(/\s/g,''));
+      if (matched) {
+        pipelineId = matched.id;
+      } else {
+        // 새 N잡 자동 등록 (랜덤 색·이모지)
+        const colors = ['#3B82F6','#10B981','#EC4899','#F59E0B','#6366F1','#8B5CF6','#14B8A6','#A855F7','#06B6D4','#84CC16'];
+        const icons = ['💎','🌱','🎯','🏆','⭐','💰','🔧','💡','🚀','🎁'];
+        const used = state.pipelines.map(p => p.color);
+        const color = colors.find(c => !used.includes(c)) || colors[state.pipelines.length % colors.length];
+        const icon = icons[state.pipelines.length % icons.length];
+        const newId = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
+        state.pipelines.push({ id: newId, name: String(pipelineId), icon, color });
+        pipelineId = newId;
+      }
+    }
+    // 🤖 새 카테고리면 자동 등록
+    const catList = sheetType==='income' ? state.incCategories : state.expCategories;
+    if (r.cat && !catList.includes(r.cat)) catList.push(r.cat);
     const item = {
       date: r.date,
-      pipeline: r.pipeline || null,
+      pipeline: pipelineId,
       cat: r.cat || (sheetType==='income' ? state.incCategories[0] : state.expCategories[0]),
       desc: r.desc || '',
       amount: parseFloat(r.amount) || 0,
@@ -4070,8 +4103,21 @@ function handleSheetUpload(e) {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const data = new Uint8Array(ev.target.result);
-      const wb = XLSX.read(data, {type: 'array', cellDates: true});
+      // CSV/엑셀 자동 판별 — CSV는 텍스트로, 엑셀은 array로 읽기 (한글 깨짐 방지)
+      const isCsv = /\.csv$/i.test(file.name);
+      let wb;
+      if (isCsv) {
+        // CSV → UTF-8 텍스트로 읽고 BOM 자동 제거
+        let text = ev.target.result;
+        if (typeof text !== 'string') {
+          text = new TextDecoder('utf-8').decode(new Uint8Array(text));
+        }
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM 제거
+        wb = XLSX.read(text, {type: 'string', cellDates: true});
+      } else {
+        const data = new Uint8Array(ev.target.result);
+        wb = XLSX.read(data, {type: 'array', cellDates: true, codepage: 65001});
+      }
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {raw: false, defval: ''});
       if (!rows.length) { alert('데이터가 없습니다'); return; }
@@ -4209,7 +4255,44 @@ function exportData() {
   const a = document.createElement('a');
   a.href = url; a.download = `n잡가계부_${todayStr()}.json`; a.click();
   URL.revokeObjectURL(url);
+  // 백업 시각 기록 (자동 알림 리셋)
+  localStorage.setItem('njob_last_backup', Date.now().toString());
+  const banner = document.getElementById('backupBanner');
+  if (banner) banner.classList.remove('show');
 }
+
+// 📥 주간 백업 알림 — 7일마다 한 번씩 권유 (데이터 분실 방지)
+function maybeShowBackupBanner() {
+  // 거래가 없는 신규 사용자에겐 안 띄움
+  const hasData = (state.income && state.income.length) || (state.expense && state.expense.length);
+  if (!hasData) return;
+  const last = parseInt(localStorage.getItem('njob_last_backup') || '0');
+  const dismissed = parseInt(localStorage.getItem('njob_backup_dismissed') || '0');
+  const now = Date.now();
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  // 한 번도 백업한 적 없거나, 마지막 백업/dismiss로부터 7일 이상 지난 경우
+  if (last && now - last < WEEK) return;
+  if (dismissed && now - dismissed < WEEK) return;
+  // 거래 한 번이라도 한 적 있는 사람에게만, 첫 사용 후 3일은 띄우지 않음 (덜 시끄럽게)
+  const firstSeen = parseInt(localStorage.getItem('njob_first_seen') || '0');
+  if (!firstSeen) {
+    localStorage.setItem('njob_first_seen', now.toString());
+    return;
+  }
+  if (now - firstSeen < 3 * 24 * 60 * 60 * 1000) return;
+  const banner = document.getElementById('backupBanner');
+  if (banner) banner.classList.add('show');
+}
+function dismissBackupBanner() {
+  localStorage.setItem('njob_backup_dismissed', Date.now().toString());
+  document.getElementById('backupBanner').classList.remove('show');
+}
+function runBackupNow() {
+  exportData();
+  // exportData가 알림 닫음
+}
+// 첫 사용 시각 기록 + 7초 후 배너 노출 시도
+setTimeout(maybeShowBackupBanner, 7000);
 function importData(e) {
   const f = e.target.files[0];
   if (!f) return;
@@ -5016,6 +5099,34 @@ function dismissPwa() {
 }
 // 5초 후 자동 노출 (즉시 띄우면 거부감)
 setTimeout(maybeShowPwaBanner, 5000);
+
+// ============================================================
+// 📲 PWA Share Target — 메일/카톡에서 공유받은 텍스트 자동 처리
+// ============================================================
+function handleSharedText() {
+  const params = new URLSearchParams(location.search);
+  const shared = (params.get('share_text') || '') + (params.get('share_title') ? '\n' + params.get('share_title') : '') + (params.get('share_url') ? '\n' + params.get('share_url') : '');
+  if (!shared.trim()) return;
+  // URL 정리 (페이지 새로고침해도 또 안 뜨도록)
+  history.replaceState({}, '', location.pathname);
+  // 거래처 추측: 수입 키워드 있으면 income, 아니면 expense
+  const isIncome = /(정산|입금|수익|애드센스|에어비앤비|야놀자|쿠팡파트너스|결제\s?완료\s?알림|호스트)/.test(shared);
+  // 모달 열기
+  openModal(isIncome ? 'income' : 'expense', null);
+  // 모달 그려진 후 자동 파싱 실행
+  setTimeout(() => {
+    const ta = document.getElementById('parseTextarea');
+    const wrap = document.getElementById('parseWrap');
+    if (ta && wrap) {
+      wrap.setAttribute('open', '');
+      ta.value = shared.trim();
+      // 살짝 딜레이 후 자동 파싱
+      setTimeout(() => applyParseToForm(), 300);
+    }
+  }, 200);
+}
+// 페이지 로드 후 공유 받은 거 처리
+setTimeout(handleSharedText, 1500);
 </script>
 </body>
 </html>
