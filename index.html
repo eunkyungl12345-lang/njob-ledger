@@ -4120,7 +4120,9 @@ function handleSheetUpload(e) {
         wb = XLSX.read(data, {type: 'array', cellDates: true, codepage: 65001});
       }
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {raw: false, defval: ''});
+      // raw: true — 값을 그대로 받음. 우리 코드가 날짜·금액 정규화 처리
+      // (raw:false면 XLSX가 ISO 날짜 "2026-01-31"을 미국식 "1-31-26"으로 자동 변환하는 문제 회피)
+      const rows = XLSX.utils.sheet_to_json(sheet, {raw: true, defval: ''});
       if (!rows.length) { alert('데이터가 없습니다'); return; }
 
       // 컬럼 자동 매핑
