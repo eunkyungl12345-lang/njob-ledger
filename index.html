@@ -53,6 +53,39 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* ===== PC 와이드뷰 (768px+) ===== */
+  @media (min-width: 768px) {
+    body {
+      max-width: 720px;
+      font-size: 15px;
+      box-shadow: 0 0 0 1px var(--border);
+      background: var(--bg);
+    }
+    /* PC에선 양옆에 부드러운 배경 카드처럼 보이도록 */
+    html { background: linear-gradient(180deg, #F0F2F8 0%, #E5E7F0 100%); }
+    .main { padding: 0 24px; }
+    .section-title { font-size: 17px; }
+    .mega-profit { font-size: 44px; }
+    .intro-card-title { font-size: 24px; }
+    /* 거래 모달도 좀 더 넓게 */
+    .modal {
+      max-width: 560px;
+      border-radius: 20px;
+    }
+  }
+  /* 큰 데스크탑 (1024px+) — N잡 카드 2열 */
+  @media (min-width: 1024px) {
+    body {
+      max-width: 900px;
+    }
+    #pipelineList {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .pipeline-card { margin-bottom: 0; }
+  }
+
   /* ===== Top App Bar ===== */
   .appbar {
     background: var(--bg);
@@ -386,6 +419,12 @@
     grid-template-columns: repeat(5, 1fr);
     z-index: 100;
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  @media (min-width: 768px) {
+    .tabbar { max-width: 720px; }
+  }
+  @media (min-width: 1024px) {
+    .tabbar { max-width: 900px; }
   }
   .tab {
     padding: 10px 4px 12px;
@@ -2188,8 +2227,8 @@
 <div class="pwa-banner" id="backupBanner" style="bottom:130px;background:linear-gradient(135deg,#0F766E,#10B981);box-shadow:0 12px 32px rgba(16,185,129,0.35);">
   <div class="pwa-banner-icon">📥</div>
   <div class="pwa-banner-body">
-    <div class="pwa-banner-title">데이터 백업 한 번 어떠세요?</div>
-    <div class="pwa-banner-desc">폰 바꾸거나 캐시 지우면 다 날아가요. JSON 파일로 받아두세요.</div>
+    <div class="pwa-banner-title">백업하세요! 데이터 안 사라지게</div>
+    <div class="pwa-banner-desc">파일 받아서 카톡 "나에게 보내기"로 저장하면 폰 바꿔도 OK</div>
   </div>
   <button class="pwa-banner-btn" style="color:#0F766E;" onclick="runBackupNow()">백업</button>
   <button class="pwa-banner-close" onclick="dismissBackupBanner()" title="7일 후 다시">✕</button>
@@ -2247,7 +2286,7 @@
         </div>
       </div>
       <div class="intro-cta-row">
-        <button class="intro-cta" onclick="scrollToPipelines()">👇 내 N잡 골라보기</button>
+        <button class="intro-cta" onclick="startQuickDemo()">⚡ 5초 데모 체험</button>
         <button class="intro-cta secondary" onclick="loadSample()" title="샘플 데이터로 둘러보기">
           <span style="margin-right:4px;">👀</span>샘플
         </button>
@@ -3157,6 +3196,37 @@ function dismissIntro() {
   const el = document.getElementById('introCard');
   if (el) el.style.display = 'none';
 }
+// ⚡ 신규 사용자 5초 데모 — 미리 채워진 거래 모달 띄움
+function startQuickDemo() {
+  // N잡 1개 자동 생성 (없으면)
+  if (!state.pipelines || !state.pipelines.length) {
+    state.pipelines = [{ id: 'demo_blog', name: '블로그', icon: '✍️', color: '#3B82F6' }];
+    saveState();
+  }
+  // 수입 모달 열고 자동으로 값 채워주기
+  openModal('income', null);
+  setTimeout(() => {
+    const form = document.querySelector('#modalBg form');
+    if (!form) return;
+    const sel = document.getElementById('pipelineSelectInput');
+    if (sel) sel.value = state.pipelines[0].id;
+    const amtInput = form.querySelector('[name="amount"]');
+    if (amtInput) amtInput.value = '125,000';
+    const catSel = form.querySelector('[name="cat"]');
+    if (catSel && catSel.options.length) catSel.value = catSel.options[0].value;
+    const srcInput = form.querySelector('[name="src"]');
+    if (srcInput) srcInput.value = '구글 애드센스';
+    const descInput = form.querySelector('[name="desc"]');
+    if (descInput) descInput.value = '5월 광고수익 (데모)';
+    // 안내 토스트
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;left:50%;top:80px;transform:translateX(-50%);background:#4F46E5;color:#fff;padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:700;z-index:1100;box-shadow:0 8px 20px rgba(79,70,229,0.35);animation:fadeInOut 3s ease-in-out;';
+    toast.innerHTML = '👇 저장 버튼만 누르면 끝이에요!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }, 250);
+}
+
 function scrollToPipelines() {
   const section = document.querySelector('.pipeline-section');
   if (section) {
@@ -4338,6 +4408,17 @@ function dismissBackupBanner() {
 function runBackupNow() {
   exportData();
   // exportData가 알림 닫음
+  // 추가 안내: 카톡 나에게 보내기 권장
+  setTimeout(() => {
+    if (confirm('✅ 백업 파일 받았어요!\n\n💡 추천: 카톡 "나에게 보내기"로 그 파일을 보내두면 폰을 잃어버려도 안전해요. 카톡에서 첨부 영구 보관됩니다.\n\n지금 카톡 열까요?')) {
+      // iOS / Android — 카톡 앱 또는 웹 카톡
+      window.location.href = 'kakaotalk://';
+      setTimeout(() => {
+        // 카톡 앱 없으면 웹 카톡으로 fallback
+        window.open('https://accounts.kakao.com/login?continue=https%3A%2F%2Fweb-tongtong.kakao.com', '_blank');
+      }, 800);
+    }
+  }, 500);
 }
 // 첫 사용 시각 기록 + 7초 후 배너 노출 시도
 setTimeout(maybeShowBackupBanner, 7000);
@@ -5185,10 +5266,12 @@ function handleUrlImport() {
   if (!enc) return;
   let data;
   try {
-    const json = decodeURIComponent(escape(atob(enc)));
+    // 사파리/iOS 호환 — escape() deprecated 우회. TextDecoder 사용.
+    const bytes = Uint8Array.from(atob(enc), c => c.charCodeAt(0));
+    const json = new TextDecoder('utf-8').decode(bytes);
     data = JSON.parse(json);
   } catch(e) {
-    alert('가져오기 실패: ' + e.message);
+    alert('가져오기 실패: ' + e.message + '\n\n링크가 너무 긴 경우 카톡 "나에게 보내기"로 보낸 후 누르세요.');
     return;
   }
   const incCount = (data.income||[]).length;
