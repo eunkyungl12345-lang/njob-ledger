@@ -2852,20 +2852,11 @@ const todayStr = () => {
 const getMonth = d => parseInt(d.slice(5,7), 10);
 const getYear = d => parseInt(d.slice(0,4), 10);
 const getDay = d => parseInt(d.slice(8,10), 10);
-const yearOf = () => {
-  const all = [...state.income, ...state.expense];
-  if (!all.length) return new Date().getFullYear();
-  return Math.max(...all.map(t => getYear(t.date)));
-};
+// 항상 시스템 현재 시점 기준 (오늘이 6/1이면 6월 표시)
+const yearOf = () => new Date().getFullYear();
 const isDeductible = e => e && e.link && e.link !== '-';
 const computeNet = i => i.amount - i.amount * i.rate;
-const currentMonth = () => {
-  if (state.expense.length) {
-    const latest = state.expense.map(e=>e.date).sort().pop();
-    return getMonth(latest);
-  }
-  return new Date().getMonth() + 1;
-};
+const currentMonth = () => new Date().getMonth() + 1;
 
 // ============================================================
 // Tabs
