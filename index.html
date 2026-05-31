@@ -5144,6 +5144,71 @@ function handleSharedText() {
 }
 // 페이지 로드 후 공유 받은 거 처리
 setTimeout(handleSharedText, 1500);
+
+// ============================================================
+// 🚀 URL 임포트 — ?import=BASE64 누르면 데이터 자동 추가
+// ============================================================
+function handleUrlImport() {
+  const params = new URLSearchParams(location.search);
+  const enc = params.get('import');
+  if (!enc) return;
+  let data;
+  try {
+    const json = decodeURIComponent(escape(atob(enc)));
+    data = JSON.parse(json);
+  } catch(e) {
+    alert('가져오기 실패: ' + e.message);
+    return;
+  }
+  const incCount = (data.income||[]).length;
+  const expCount = (data.expense||[]).length;
+  const isReset = params.get('reset') === '1';
+  const msg = isReset
+    ? `📥 ${incCount}건 수입 + ${expCount}건 지출을 추가합니다.\n\n⚠️ 기존 가계부 데이터(샘플 포함)는 모두 삭제됩니다.\n\n진행할까요?`
+    : `📥 ${incCount}건 수입 + ${expCount}건 지출을 기존 데이터에 추가할까요?`;
+  if (!confirm(msg)) {
+    history.replaceState({}, '', location.pathname);
+    return;
+  }
+  // 초기화 옵션
+  if (isReset) {
+    state.income = [];
+    state.expense = [];
+    state.pipelines = [];
+    state.memos = {};
+  }
+  // 파이프라인 추가 (중복 X)
+  (data.pipelines || []).forEach(p => {
+    if (!state.pipelines.find(sp => sp.id === p.id || sp.name === p.name)) {
+      state.pipelines.push(p);
+    }
+  });
+  // 카테고리 추가 (중복 X)
+  (data.incCategories || []).forEach(c => {
+    if (!state.incCategories.includes(c)) state.incCategories.push(c);
+  });
+  (data.expCategories || []).forEach(c => {
+    if (!state.expCategories.includes(c)) state.expCategories.push(c);
+  });
+  // 거래 추가 — pipeline 이름이면 id로 변환
+  const resolvePipe = (pid) => {
+    if (!pid) return pid;
+    const found = state.pipelines.find(p => p.id === pid || p.name === pid);
+    return found ? found.id : pid;
+  };
+  (data.income || []).forEach(i => state.income.push({...i, pipeline: resolvePipe(i.pipeline)}));
+  (data.expense || []).forEach(e => state.expense.push({...e, pipeline: resolvePipe(e.pipeline)}));
+  // 거래처 학습 자동 등록
+  [...(data.income||[]).map(i=>({...i,_type:'income'})), ...(data.expense||[]).map(e=>({...e,_type:'expense'}))].forEach(item => {
+    learnClassify(item, item._type);
+  });
+  saveState();
+  history.replaceState({}, '', location.pathname);
+  alert(`✅ ${incCount + expCount}건 추가 완료!\n홈에서 N잡별 카드 확인해보세요.`);
+  renderAll();
+  goTab('home');
+}
+setTimeout(handleUrlImport, 1500);
 </script>
 </body>
 </html>
