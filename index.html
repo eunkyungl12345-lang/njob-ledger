@@ -4150,13 +4150,27 @@ function handleSheetUpload(e) {
 
       const parsed = rows.map(r => {
         const row = emptyRow();
-        if (keyMap.date && r[keyMap.date]) {
+        if (keyMap.date && r[keyMap.date] !== '' && r[keyMap.date] != null) {
           let d = r[keyMap.date];
-          if (typeof d === 'string') {
+          if (typeof d === 'number') {
+            // Excel serial number → Date (Excel epoch: 1899-12-30)
+            const dt = new Date(Math.round((d - 25569) * 86400 * 1000));
+            d = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`;
+          } else if (typeof d === 'string') {
             // 다양한 형식 처리
             d = d.replace(/\./g, '-').replace(/\//g, '-').trim();
-            const m = d.match(/(\d{4})-?(\d{1,2})-?(\d{1,2})/);
-            if (m) d = `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+            // ISO (YYYY-MM-DD) 우선
+            let m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (m) {
+              d = `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+            } else {
+              // 미국식 (M-D-YY 또는 M-D-YYYY)
+              m = d.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+              if (m) {
+                let yr = m[3].length === 2 ? '20' + m[3] : m[3];
+                d = `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+              }
+            }
           } else if (d instanceof Date) {
             d = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
           }
