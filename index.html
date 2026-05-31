@@ -1172,8 +1172,23 @@
     position: relative;
     margin-bottom: 6px;
     letter-spacing: 0.3px;
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 8px;
   }
+  .mega-nav {
+    background: rgba(255,255,255,0.18);
+    border: 0;
+    color: #fff;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .mega-nav:hover, .mega-nav:active { background: rgba(255,255,255,0.32); }
+  .mega-nav:disabled { opacity: 0.3; cursor: not-allowed; }
   .mega-label .pill {
     background: rgba(255,255,255,0.18);
     padding: 3px 10px;
@@ -2243,8 +2258,10 @@
     <!-- 🔥 1. 순이익 뽝 -->
     <div class="mega-hero">
       <div class="mega-label">
-        이번 달 순이익
+        <button class="mega-nav" onclick="changeViewMonth(-1)" title="이전 달">◀</button>
+        <span id="megaPeriodLabel">이번 달 순이익</span>
         <span class="pill" id="megaMonthLabel">5월</span>
+        <button class="mega-nav" onclick="changeViewMonth(1)" title="다음 달">▶</button>
       </div>
       <div class="mega-profit" id="megaProfit">0원</div>
       <div class="mega-sub">
@@ -2852,11 +2869,29 @@ const todayStr = () => {
 const getMonth = d => parseInt(d.slice(5,7), 10);
 const getYear = d => parseInt(d.slice(0,4), 10);
 const getDay = d => parseInt(d.slice(8,10), 10);
-// 항상 시스템 현재 시점 기준 (오늘이 6/1이면 6월 표시)
-const yearOf = () => new Date().getFullYear();
+// 항상 시스템 현재 시점 기준 + 사용자가 화살표로 이동한 viewMonth 우선
+let viewYear = null;   // null이면 시스템 현재
+let viewMonth = null;  // null이면 시스템 현재
+const yearOf = () => viewYear || new Date().getFullYear();
 const isDeductible = e => e && e.link && e.link !== '-';
 const computeNet = i => i.amount - i.amount * i.rate;
-const currentMonth = () => new Date().getMonth() + 1;
+const currentMonth = () => viewMonth || (new Date().getMonth() + 1);
+function changeViewMonth(delta) {
+  const cur = currentMonth();
+  const yr = yearOf();
+  let m = cur + delta;
+  let y = yr;
+  if (m < 1) { m = 12; y -= 1; }
+  if (m > 12) { m = 1; y += 1; }
+  viewMonth = m;
+  viewYear = y;
+  renderAll();
+}
+function resetToCurrentMonth() {
+  viewMonth = null;
+  viewYear = null;
+  renderAll();
+}
 
 // ============================================================
 // Tabs
@@ -2939,6 +2974,11 @@ function renderHome() {
   // 🔥 1. 순이익 뽝
   document.getElementById('megaProfit').textContent = fmtCompact(cm.profit);
   document.getElementById('megaMonthLabel').textContent = curMonth + '월';
+  // "이번 달" vs 과거/미래 라벨
+  const now = new Date();
+  const isCurrent = (yr === now.getFullYear() && curMonth === now.getMonth() + 1);
+  const periodEl = document.getElementById('megaPeriodLabel');
+  if (periodEl) periodEl.textContent = isCurrent ? '이번 달 순이익' : (yr !== now.getFullYear() ? `${yr}년 ` : '') + '순이익';
   document.getElementById('heroIncome').textContent = fmtCompact(cm.income);
   document.getElementById('heroExpense').textContent = fmtCompact(cm.expense);
   if (prevMonth && prevMonth.profit > 0) {
