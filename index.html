@@ -4113,7 +4113,8 @@ function handleSheetUpload(e) {
           text = new TextDecoder('utf-8').decode(new Uint8Array(text));
         }
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM 제거
-        wb = XLSX.read(text, {type: 'string', cellDates: true});
+        // cellDates 끔 — CSV의 ISO 날짜 ("2026-01-31")가 미국식 (1-31-26)으로 자동 변환되는 거 방지
+        wb = XLSX.read(text, {type: 'string'});
       } else {
         const data = new Uint8Array(ev.target.result);
         wb = XLSX.read(data, {type: 'array', cellDates: true, codepage: 65001});
